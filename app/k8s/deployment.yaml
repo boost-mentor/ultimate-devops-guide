@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scott-pilgrim
+  labels:
+    app: scott-pilgrim
+spec:
+  # Один под — как и договаривались. Хочешь масштаб — поменяй на 3
+  # и увидишь, что в ответе API меняется поле "pod".
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scott-pilgrim
+  template:
+    metadata:
+      labels:
+        app: scott-pilgrim
+    spec:
+      containers:
+        - name: scott-pilgrim
+          # ВАЖНО: подставь свой образ из реестра (Docker Hub / GHCR и т.п.).
+          # Локально в minikube/kind можно загрузить образ без пуша в реестр
+          # (см. README) и оставить imagePullPolicy: IfNotPresent.
+          image: scott-pilgrim-quotes:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          # Пробы здоровья. liveness — "жив ли процесс?" (не ответил => под ПЕРЕЗАПУСКАЕТСЯ).
+          # readiness — "готов ли принимать трафик?" (не готов => под ВЫВОДИТСЯ из балансировки Service).
+          # Бьём в отдельные ручки /livez и /readyz.
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          # Лимиты ресурсов — хорошая практика, приложение крошечное.
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "16Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

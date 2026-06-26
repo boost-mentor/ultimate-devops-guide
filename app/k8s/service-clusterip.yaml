@@ -1,0 +1,16 @@
+# ClusterIP — доступ ТОЛЬКО внутри кластера (по DNS-имени сервиса). Тип по умолчанию.
+# Применять: kubectl apply -f scott-pilgrim-k8s/k8s/service-clusterip.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: scott-clusterip
+  labels:
+    app: scott-pilgrim
+spec:
+  type: ClusterIP
+  selector:
+    app: scott-pilgrim     # находит поды по этому лейблу
+  ports:
+    - name: http
+      port: 80             # порт сервиса (внутри кластера)
+      targetPort: 8080     # порт контейнера (наш Go-сервер)

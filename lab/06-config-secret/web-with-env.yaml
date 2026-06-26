@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-with-env
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-with-env
+  template:
+    metadata:
+      labels:
+        app: web-with-env
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          command: ["sh", "-c", "env | sort && sleep 3600"]
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secret

@@ -1,0 +1,38 @@
+# Ingress — ОДНО правило маршрутизации HTTP по имени хоста (L7).
+# Сам по себе НЕ работает: его исполняет Ingress Controller (ingress-nginx),
+# который слушает на нодах и по Host-заголовку шлёт трафик в нужный Service.
+#
+# Здесь — name-based virtual hosting: два хоста -> два РАЗНЫХ наших сервиса.
+#   scott.local -> scott-clusterip  (наш Go-сервис Scott Pilgrim Quotes, :8080)
+#   web.local   -> web              (nginx из урока про Deployment/Service)
+#
+# Применять: kubectl apply -f scott-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: scott-ingress
+  labels:
+    app: scott-pilgrim
+spec:
+  ingressClassName: nginx          # какой контроллер исполняет правило
+  rules:
+    - host: scott.local            # http://scott.local -> приложение Scott Pilgrim
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: scott-clusterip   # ClusterIP-сервис наших подов
+                port:
+                  number: 80            # порт Service (он сам шлёт на :8080 контейнера)
+    - host: web.local              # http://web.local -> nginx
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80

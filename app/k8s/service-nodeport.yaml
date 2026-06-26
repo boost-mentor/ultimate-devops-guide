@@ -1,0 +1,18 @@
+# NodePort — открывает ОДИН И ТОТ ЖЕ порт на КАЖДОЙ ноде кластера.
+# Снаружи: curl http://<любой-worker-IP>:<nodePort>. Так и бьёт внешний HAProxy.
+# Применять: kubectl apply -f scott-pilgrim-k8s/k8s/service-nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: scott-nodeport
+  labels:
+    app: scott-pilgrim
+spec:
+  type: NodePort
+  selector:
+    app: scott-pilgrim
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      nodePort: 30080      # фиксируем порт ноды (диапазон 30000–32767); убери — k8s выберет сам

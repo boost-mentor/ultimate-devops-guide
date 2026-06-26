@@ -1,0 +1,23 @@
+# Postgres для демо «приложение + БД + Secret».
+# Поднимается ПРОСТО, через docker compose, на ОДНОЙ из worker-нод кластера —
+# рядом с k8s, но не внутри него. Под в кубере достучится по <IP-этой-ноды>:5432.
+#
+# Авто-миграции: всё из ./init/*.sql Postgres выполнит САМ при ПЕРВОМ старте
+# (когда том пустой). Пересоздать с нуля: docker compose down -v && docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: scott-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: scott
+      POSTGRES_DB: scott
+      POSTGRES_PASSWORD: s3cr3t-pilgrim   # ⚠️ ТОТ ЖЕ пароль кладём в k8s Secret (../k8s/secret.yaml)
+    ports:
+      - "5432:5432"                       # публикуем порт на ноду → pod подключится по <node-ip>:5432
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d:ro   # сюда Postgres смотрит при первом старте
+      - scott-pgdata:/var/lib/postgresql/data
+
+volumes:
+  scott-pgdata:

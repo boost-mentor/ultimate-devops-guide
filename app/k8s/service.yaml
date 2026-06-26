@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scott-pilgrim
+  labels:
+    app: scott-pilgrim
+spec:
+  # LoadBalancer — самый прямой способ "открыть путь наружу" в облаке
+  # (GKE/EKS/Yandex Cloud и т.п.): облако выдаст внешний IP.
+  #
+  # Для локального кластера выбери под свой стенд:
+  #   - minikube:  оставь LoadBalancer и в отдельном терминале запусти
+  #                `minikube tunnel`, либо поменяй type на NodePort и зайди
+  #                по `minikube service scott-pilgrim --url`.
+  #   - kind:      используй type: NodePort и `kubectl port-forward`.
+  #   - всегда работает: `kubectl port-forward svc/scott-pilgrim 8080:80`
+  type: LoadBalancer
+  selector:
+    app: scott-pilgrim # связь с подами по этому лейблу
+  ports:
+    - name: http
+      port: 80 # порт сервиса (снаружи)
+      targetPort: 8080 # порт контейнера (наш Go-сервер)

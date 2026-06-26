@@ -1,0 +1,34 @@
+# Демо динамического тома: PVC класса local-path → provisioner САМ создаёт PV.
+# Перед этим поставь provisioner:
+#   kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-volume
+  namespace: default
+spec:
+  containers:
+    - name: web
+      image: nginx:stable-alpine
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/nginx/html   # сюда примонтирован постоянный диск
+      ports:
+        - containerPort: 80
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: demo-pvc

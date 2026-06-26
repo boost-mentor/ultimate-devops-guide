@@ -1,0 +1,58 @@
+# DB-вариант деплоя: приложение берёт цитаты из Postgres, а пароль — из Secret.
+# Отличие от k8s/deployment.yaml — блок env (DB_*), причём DB_PASSWORD идёт ИЗ Secret.
+# Перед применением: подними БД (db/docker-compose.yml на воркере) и подставь его IP в DB_HOST.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scott-pilgrim
+  labels:
+    app: scott-pilgrim
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scott-pilgrim
+  template:
+    metadata:
+      labels:
+        app: scott-pilgrim
+    spec:
+      containers:
+        - name: scott-pilgrim
+          image: scott-pilgrim-quotes:1.0.0   # ⚠️ пересобери образ — в нём теперь код с БД
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: "REPLACE_WITH_WORKER_NODE_IP"   # ← IP ноды, где docker compose поднял postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "scott"
+            - name: DB_NAME
+              value: "scott"
+            - name: DB_PASSWORD                 # ← пароль приходит из Secret, НЕ лежит в этом манифесте
+              valueFrom:
+                secretKeyRef:
+                  name: scott-db
+                  key: DB_PASSWORD
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz                     # теперь /readyz ПИНГУЕТ БД: нет БД → под NotReady
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "16Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

@@ -1,0 +1,28 @@
+# ── секреты и доступы (НИКОГДА не коммитим) ──
+*.pem
+*.key
+*_rsa
+*_ed25519
+id_rsa*
+id_ed25519*
+kubeconfig
+*kubeconfig*
+admin.conf
+*.kubeconfig
+.env
+.env.*
+secrets.*.yaml
+*-real-secret.yaml
+
+# ── сборка Go ──
+/app/server
+*.exe
+vendor/
+
+# ── ОС / редакторы ──
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log

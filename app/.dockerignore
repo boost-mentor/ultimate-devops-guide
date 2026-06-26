@@ -1,0 +1,8 @@
+# Не тащим в build context лишнее — сборка быстрее, кэш стабильнее.
+.git
+.gitignore
+k8s/
+README.md
+*.md
+Dockerfile
+.dockerignore

@@ -1,0 +1,12 @@
+# LoadBalancer для демо «висит в <pending>» (нет MetalLB в кластере).
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-lb
+spec:
+  type: LoadBalancer
+  selector:
+    app: web          # тот же selector, что у web-deployment
+  ports:
+    - port: 80
+      targetPort: 80

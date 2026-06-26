@@ -1,0 +1,37 @@
+# Демо сети контейнеров на ТВОЁМ приложении: scott-pilgrim (реально ходит в БД ПО ИМЕНИ) + postgres,
+# в одной user-defined bridge-сети. Цель — показать DNS по имени сервиса + route table + veth/bridge.
+# netshoot — отдельный сетевой ЗОНД (ip/ping/dig/tcpdump): в Alpine-образе приложения этих тулз нет.
+# Запуск (Linux-хост с Docker):  cd scott-pilgrim-k8s/net-demo && docker compose up -d
+services:
+  app:                                  # ТВОЁ приложение (образ собрал на слайде 3: scott-pilgrim-quotes:1.0.0)
+    image: scott-pilgrim-quotes:1.0.0
+    container_name: demo-app
+    environment:
+      DB_HOST: postgres                 # ← приложение ходит в БД ПО ИМЕНИ сервиса (Docker DNS!)
+      DB_USER: scott
+      DB_NAME: scott
+      DB_PASSWORD: s3cr3t-pilgrim        # учебный пароль (в k8s кладём в Secret)
+    ports: ["8080:8080"]
+    depends_on: [postgres]
+    networks: [demo-net]
+
+  postgres:                             # имя сервиса = postgres → именно по нему резолвится DB_HOST
+    image: postgres:16-alpine
+    container_name: demo-postgres
+    environment:
+      POSTGRES_USER: scott
+      POSTGRES_DB: scott
+      POSTGRES_PASSWORD: s3cr3t-pilgrim
+    volumes:
+      - ../db/init:/docker-entrypoint-initdb.d:ro   # авто-миграции (таблица quotes) при первом старте
+    networks: [demo-net]
+
+  netshoot:                             # сетевой ЗОНД для разбора (НЕ часть приложения) — тут есть ip/dig/tcpdump
+    image: nicolaka/netshoot
+    container_name: demo-netshoot
+    command: sleep infinity
+    networks: [demo-net]
+
+networks:
+  demo-net:
+    driver: bridge

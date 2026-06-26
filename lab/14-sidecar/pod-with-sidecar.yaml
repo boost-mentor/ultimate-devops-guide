@@ -1,0 +1,37 @@
+# Демо «зачем в Pod несколько контейнеров»: app + sidecar, общий volume.
+# Обе роли — busybox, образ собирать НЕ надо: app пишет строки в файл, sidecar их tail -f.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-sidecar
+  labels:
+    app: app-with-sidecar
+spec:
+  volumes:
+    - name: app-logs
+      emptyDir: {}                       # общий диск двух контейнеров
+  containers:
+    - name: app                          # «приложение» — пишет строки в общий лог
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - |
+          i=0
+          while true; do
+            i=$((i+1))
+            echo "$(date '+%H:%M:%S') app: запрос #$i обработан" >> /var/log/app/app.log
+            sleep 2
+          done
+      volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app
+    - name: log-sidecar                  # «помощник» — читает ТОТ ЖЕ файл
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - |
+          touch /var/log/app/app.log
+          tail -f /var/log/app/app.log
+      volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app

@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: final-web
+  namespace: final-demo
+spec:
+  rules:
+    - host: final.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: final-web
+                port:
+                  number: 80

@@ -1,0 +1,10 @@
+# ExternalName — НЕ ведёт в поды. Это просто DNS-CNAME на внешний адрес.
+# Внутри кластера зовёшь сервис — резолвится во внешний хост. Кейс гибрида облако↔железо.
+# Применять: kubectl apply -f scott-pilgrim-k8s/k8s/service-externalname.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: scott-externalname
+spec:
+  type: ExternalName
+  externalName: ya.ru
