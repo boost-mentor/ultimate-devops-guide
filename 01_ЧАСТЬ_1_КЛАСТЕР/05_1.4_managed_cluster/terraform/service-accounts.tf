@@ -30,6 +30,15 @@ resource "yandex_resourcemanager_folder_iam_member" "cluster_lb" {
   member    = "serviceAccount:${yandex_iam_service_account.cluster.id}"
 }
 
+# Service type LoadBalancer: cloud-controller-manager создаёт сетевой балансировщик
+# от имени SA кластера. Без этой роли Service висит в <pending>, а в Events —
+# PermissionDenied (на записи роль добавили в консоли; здесь — в коде, без drift).
+resource "yandex_resourcemanager_folder_iam_member" "cluster_lb_admin" {
+  folder_id = data.yandex_client_config.client.folder_id
+  role      = "load-balancer.admin" # создание/удаление NLB для Service LoadBalancer
+  member    = "serviceAccount:${yandex_iam_service_account.cluster.id}"
+}
+
 # --- РОЛИ УЗЛОВ ---
 resource "yandex_resourcemanager_folder_iam_member" "nodes_puller" {
   folder_id = data.yandex_client_config.client.folder_id

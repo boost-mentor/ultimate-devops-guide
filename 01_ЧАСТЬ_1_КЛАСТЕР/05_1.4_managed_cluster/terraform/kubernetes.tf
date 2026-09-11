@@ -37,6 +37,7 @@ resource "yandex_kubernetes_cluster" "this" {
   depends_on = [
     yandex_resourcemanager_folder_iam_member.cluster_editor,
     yandex_resourcemanager_folder_iam_member.cluster_lb,
+    yandex_resourcemanager_folder_iam_member.cluster_lb_admin,
     yandex_resourcemanager_folder_iam_member.nodes_puller,
   ]
 }
