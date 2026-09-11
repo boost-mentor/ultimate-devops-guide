@@ -1,0 +1,12 @@
+# Terraform state — содержит СЕКРЕТЫ в открытом виде
+*.tfstate
+*.tfstate.*
+.terraform/
+# .terraform.lock.hcl КОММИТИМ: он фиксирует выбранные версии провайдеров.
+# Реальные значения переменных
+terraform.tfvars
+*.auto.tfvars
+# Планы могут содержать чувствительные данные
+*.tfplan
+crash.log
+crash.*.log

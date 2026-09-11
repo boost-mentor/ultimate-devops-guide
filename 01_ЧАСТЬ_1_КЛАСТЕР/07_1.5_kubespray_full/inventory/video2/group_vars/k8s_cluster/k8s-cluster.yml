@@ -1,0 +1,23 @@
+---
+# Базовая версия кластера. Обновление меняет только kube_version на 1.35.4.
+kube_version: 1.34.7
+# Calico выдаёт Pod IP и строит маршруты между нодами.
+kube_network_plugin: calico
+# containerd запускает контейнеры на Kubernetes-нодах, включая control plane.
+container_manager: containerd
+# Явно выбираем iptables; strict ARP относится к режиму IPVS.
+kube_proxy_mode: iptables
+kube_proxy_strict_arp: false
+# Service и Pod получают адреса из разных, непересекающихся диапазонов.
+kube_service_addresses: 10.233.0.0/18
+kube_pods_subnet: 10.233.64.0/18
+# Node CIDR prefix Kubernetes; это не block size Calico IPAM.
+kube_network_node_prefix: 24
+cluster_name: cluster.local
+dns_mode: coredns
+enable_nodelocaldns: true
+# После установки Kubespray сохраняет admin.conf на машине запуска. В учебном
+# стенде API-адресом в нём станет разрешённый ansible_host node1.
+kubeconfig_localhost: true
+kubeconfig_localhost_ansible_host: true
+kubectl_localhost: false

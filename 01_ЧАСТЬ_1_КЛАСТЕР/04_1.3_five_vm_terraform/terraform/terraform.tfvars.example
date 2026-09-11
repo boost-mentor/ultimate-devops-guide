@@ -1,0 +1,15 @@
+# Скопировать в terraform.tfvars и поправить под себя:
+#   cp terraform.tfvars.example terraform.tfvars
+
+zone         = "ru-central1-a"
+cluster_name = "k8s-selfmanaged"
+
+# Сеть под ноды. Проверь, что не пересекается с Pod CIDR (10.233.64.0/18)
+# и Service CIDR (10.233.0.0/18) из Kubespray.
+vpc_cidr = "10.10.0.0/24"
+
+# Укажи ТОЛЬКО свой текущий публичный IP /32. Не открывай SSH всему интернету.
+allowed_ssh_cidr = "203.0.113.42/32"
+
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+ssh_user            = "ubuntu"

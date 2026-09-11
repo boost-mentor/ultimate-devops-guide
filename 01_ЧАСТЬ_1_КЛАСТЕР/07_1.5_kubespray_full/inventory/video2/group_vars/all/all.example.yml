@@ -1,0 +1,4 @@
+---
+# Terraform подставляет сюда public/floating IP node1 для TLS SAN.
+supplementary_addresses_in_ssl_keys:
+  - 203.0.113.11

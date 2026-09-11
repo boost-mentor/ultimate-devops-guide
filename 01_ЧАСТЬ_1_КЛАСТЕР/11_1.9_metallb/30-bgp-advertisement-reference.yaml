@@ -1,0 +1,11 @@
+# REFERENCE ONLY: the BGPPeer and upstream route policy must exist first.
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: video2-bgp
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - video2-pool
+  aggregationLength: 32
+  localPref: 100

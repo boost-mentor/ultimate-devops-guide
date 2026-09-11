@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: calico-b
+  namespace: network-proof
+  labels:
+    app: calico-proof
+    # Service ниже найдёт этот Pod по отдельной метке endpoint.
+    endpoint: calico-b
+spec:
+  # Второй Pod размещаем на другой ноде: так трафик точно пересечёт
+  # межнодовую сеть Calico, а не останется внутри одной машины.
+  nodeSelector:
+    kubernetes.io/hostname: node3
+  containers:
+    - name: toolbox
+      image: busybox:1.37.0
+      # В отличие от диагностического Pod на node2, здесь реально слушаем
+      # TCP-порт. Поэтому последующий curl доказывает HTTP, а не только DNS.
+      command:
+        - sh
+        - -c
+        - >-
+          mkdir -p /www &&
+          printf 'calico-b on node3\n' >/www/index.html &&
+          httpd -f -p 8080 -h /www
+      ports:
+        - name: http
+          containerPort: 8080
+      readinessProbe:
+        httpGet:
+          path: /
+          port: http
+        initialDelaySeconds: 1
+        periodSeconds: 2
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+  restartPolicy: Never

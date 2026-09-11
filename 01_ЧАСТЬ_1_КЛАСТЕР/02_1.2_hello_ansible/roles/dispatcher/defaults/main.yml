@@ -1,0 +1,7 @@
+---
+# Defaults — самые слабые значения роли. Inventory может переопределить их,
+# поэтому role остаётся самостоятельной, но не диктует окружению настройки.
+office_path: /tmp/devops-may-cry
+dispatcher_name: "дежурный"
+gear: "Фонарь из defaults роли"
+call_prices: {}

@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Объекты разделены по файлам для объяснения в кадре. Kustomize применяет
+# их вместе, но каждый манифест можно открыть и разобрать отдельно.
+resources:
+  - 00-namespace.yaml
+  - 10-pod-node2.yaml
+  - 20-pod-node3.yaml
+  - 30-service.yaml

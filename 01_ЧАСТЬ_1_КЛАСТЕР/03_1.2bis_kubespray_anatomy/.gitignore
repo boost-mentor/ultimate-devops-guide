@@ -1,0 +1,7 @@
+.venv/
+vendor/
+kubespray/
+inventory/video2/inventory.ini
+inventory/video2/group_vars/all/all.yml
+inventory/video2/artifacts/
+*.retry

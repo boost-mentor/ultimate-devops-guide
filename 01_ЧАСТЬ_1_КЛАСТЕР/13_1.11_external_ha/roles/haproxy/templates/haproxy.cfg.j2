@@ -1,0 +1,35 @@
+global
+  log /dev/log local0
+  daemon
+  maxconn 4096
+
+defaults
+  log global
+  mode tcp
+  option tcplog
+  timeout connect 5s
+  timeout client 30s
+  timeout server 30s
+
+frontend kubernetes_entry
+  bind *:{{ ha_frontend_port }}
+  default_backend kubernetes_nodeports
+
+backend kubernetes_nodeports
+  balance roundrobin
+  # Data plane remains L4: TLS could pass through unchanged. Health checking is
+  # deliberately L7 so a listening but broken application is removed as well.
+  option httpchk
+  http-check send meth GET uri /readyz ver HTTP/1.1 hdr Host devops-may-cry.local
+  http-check expect status 200
+{% for node in groups['kubernetes_nodes'] %}
+  server {{ node }} {{ hostvars[node].private_ip }}:{{ k8s_nodeport }} check inter 2s fall 3 rise 2
+{% endfor %}
+
+listen stats
+  mode http
+  option httplog
+  bind 127.0.0.1:8404
+  stats enable
+  stats uri /stats
+  stats refresh 2s

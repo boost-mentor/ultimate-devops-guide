@@ -1,0 +1,11 @@
+---
+- name: Show a small, deliberate variable-precedence chain
+  hosts: night_office
+  gather_facts: false
+
+  vars:
+    # Эта play variable перекрывает role defaults, group_vars и host_vars.
+    gear: "Компас из play vars"
+
+  roles:
+    - role: dispatcher

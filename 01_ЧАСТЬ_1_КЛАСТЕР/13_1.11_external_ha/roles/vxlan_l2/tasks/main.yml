@@ -1,0 +1,56 @@
+---
+- name: Prove that the declared private address belongs to this VM
+  # VXLAN must use the intended private interface. Guessing from the default
+  # route can select the wrong source address and create asymmetric traffic.
+  ansible.builtin.assert:
+    that:
+      - private_ip is defined
+      - private_ip in ansible_all_ipv4_addresses
+    fail_msg: >-
+      private_ip is absent from this VM. Fix inventory/interface ownership;
+      do not weaken the firewall as a first guess.
+
+- name: Install tools for the private L2 overlay
+  ansible.builtin.apt:
+    name: [iproute2, bridge-utils, curl]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install the idempotent VXLAN setup program
+  ansible.builtin.template:
+    src: setup-vxlan.sh.j2
+    dest: /usr/local/sbin/setup-video2-vxlan
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart VIDEO2 VXLAN
+
+- name: Install the persistent systemd unit
+  ansible.builtin.template:
+    src: video2-vxlan.service.j2
+    dest: /etc/systemd/system/video2-vxlan.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart VIDEO2 VXLAN
+
+- name: Enable and start the persistent overlay
+  ansible.builtin.systemd:
+    name: video2-vxlan.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Apply changed overlay files before proving connectivity
+  ansible.builtin.meta: flush_handlers
+
+- name: Prove the peer overlay address is reachable
+  ansible.builtin.command: "ping -c 2 -W 2 {{ hostvars[item].ha_overlay_ip }}"
+  changed_when: false
+  register: overlay_ping
+  retries: 15
+  delay: 2
+  until: overlay_ping.rc == 0
+  loop: "{{ groups['load_balancers'] }}"
+  when: item != inventory_hostname

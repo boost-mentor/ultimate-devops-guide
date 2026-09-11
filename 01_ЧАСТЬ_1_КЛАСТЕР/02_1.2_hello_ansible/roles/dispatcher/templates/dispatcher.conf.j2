@@ -1,0 +1,7 @@
+# Файл управляется Ansible: ручная правка будет возвращена к описанному виду.
+office={{ office_path }}
+dispatcher={{ dispatcher_name }}
+gear={{ gear }}
+{% for incident, price in call_prices | dictsort %}
+price_{{ incident | replace('-', '_') }}={{ price }}
+{% endfor %}

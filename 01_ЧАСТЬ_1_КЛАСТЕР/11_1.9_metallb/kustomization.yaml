@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Конфигурация MetalLB и Service разделены, чтобы в кадре было видно:
+# откуда берётся адрес, как он объявляется и как приложение его получает.
+resources:
+  - 00-ip-address-pool.yaml
+  - 10-l2-advertisement.yaml
+  - devops-may-cry-loadbalancer.yaml

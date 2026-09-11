@@ -1,0 +1,12 @@
+[Unit]
+Description=VIDEO2 private VXLAN between load balancers
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/setup-video2-vxlan
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

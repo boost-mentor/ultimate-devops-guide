@@ -1,0 +1,77 @@
+---
+- name: Save and verify an etcd snapshot before the upgrade
+  hosts: kube_control_plane[0]
+  become: true
+  gather_facts: false
+
+  vars:
+    # Fixed lab path keeps the demonstration readable. Production backups use
+    # unique timestamps and are copied off-host before an upgrade.
+    snapshot_path: /var/backups/etcd/video2-pre-upgrade.db
+    allow_snapshot_retake: false
+
+  tasks:
+    - name: Guard the only path this retake playbook may replace
+      ansible.builtin.assert:
+        that:
+          - snapshot_path == '/var/backups/etcd/video2-pre-upgrade.db'
+        fail_msg: "Refusing an unexpected snapshot path"
+
+    - name: Create the protected backup directory
+      ansible.builtin.file:
+        path: /var/backups/etcd
+        state: directory
+        mode: "0700"
+
+    - name: Read the current snapshot state
+      ansible.builtin.stat:
+        path: "{{ snapshot_path }}"
+      register: existing_snapshot
+
+    - name: Stop before overwriting an existing snapshot by accident
+      ansible.builtin.assert:
+        that:
+          - not existing_snapshot.stat.exists or allow_snapshot_retake | bool
+        fail_msg: >-
+          Snapshot already exists. Inspect or copy it first; for an intentional
+          recording retake pass allow_snapshot_retake=true.
+
+    - name: Remove only the known retake file when explicitly allowed
+      ansible.builtin.file:
+        path: "{{ snapshot_path }}"
+        state: absent
+      when:
+        - existing_snapshot.stat.exists
+        - allow_snapshot_retake | bool
+
+    - name: Save the etcd snapshot with the Kubespray helper
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/etcdctl.sh
+          - snapshot
+          - save
+          - "{{ snapshot_path }}"
+      register: snapshot_save
+      changed_when: snapshot_save.rc == 0
+
+    - name: Read snapshot metadata before continuing
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/etcdutl
+          - snapshot
+          - status
+          - "{{ snapshot_path }}"
+          - --write-out=table
+      register: snapshot_status
+      changed_when: false
+
+    - name: Prove the snapshot is readable
+      ansible.builtin.assert:
+        that:
+          - snapshot_status.rc == 0
+          - snapshot_status.stdout | trim | length > 0
+        fail_msg: "Snapshot was created but etcdutl could not read its metadata"
+
+    - name: Show non-secret snapshot metadata
+      ansible.builtin.debug:
+        var: snapshot_status.stdout_lines

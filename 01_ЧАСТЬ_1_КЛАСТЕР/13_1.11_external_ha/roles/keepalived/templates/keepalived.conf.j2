@@ -1,0 +1,43 @@
+global_defs {
+  router_id {{ inventory_hostname | upper }}
+  enable_script_security
+  script_user root
+}
+
+vrrp_script check_haproxy {
+  script "/usr/local/sbin/check-video2-haproxy"
+  interval 2
+  fall 2
+  rise 2
+}
+
+vrrp_instance VIDEO2_ENTRY {
+  state BACKUP
+  interface vxlan100
+  virtual_router_id 77
+  priority {{ ha_priority }}
+  advert_int 1
+  nopreempt
+
+  unicast_src_ip {{ ha_overlay_ip }}
+  unicast_peer {
+{% for peer in groups['load_balancers'] if peer != inventory_hostname %}
+    {{ hostvars[peer].ha_overlay_ip }}
+{% endfor %}
+  }
+
+  authentication {
+    # VRRP PASS is only a lab guard, not encryption or strong authentication.
+    # Production additionally isolates/filters VRRP on the intended interface.
+    auth_type PASS
+    auth_pass video2ha
+  }
+
+  virtual_ipaddress {
+    {{ ha_vip }}/{{ ha_vip_prefix }} dev vxlan100
+  }
+
+  track_script {
+    check_haproxy
+  }
+}

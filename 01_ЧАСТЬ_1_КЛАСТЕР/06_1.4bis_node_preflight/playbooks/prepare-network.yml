@@ -1,0 +1,56 @@
+---
+# Deliberate mutation of ONLY the cloud lab's k8s_cluster hosts.
+# Not a workstation/VPN workaround. Run only for the documented network prerequisites.
+- name: Prepare selected Linux networking prerequisites for VIDEO2A
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Limit this preparation to the supported lab OS families
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.system == 'Linux'
+          - ansible_facts.distribution in ['Ubuntu', 'Debian']
+        fail_msg: This preparation is only for the selected Ubuntu or Debian lab nodes.
+
+    - name: Read currently loaded modules
+      ansible.builtin.command: lsmod
+      register: video2_loaded_modules
+      changed_when: false
+
+    - name: Persist selected modules for next boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/video2-network.conf
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          overlay
+          br_netfilter
+
+    - name: Load missing modules now
+      ansible.builtin.command: "modprobe {{ item }}"
+      loop:
+        - overlay
+        - br_netfilter
+      when: not (video2_loaded_modules.stdout is search('(?m)^' ~ item ~ '\s'))
+      changed_when: true
+
+    - name: Read current IPv4 forwarding
+      ansible.builtin.command: sysctl -n net.ipv4.ip_forward
+      register: video2_forwarding
+      changed_when: false
+
+    - name: Persist forwarding for next boot
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-video2-network.conf
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          net.ipv4.ip_forward = 1
+
+    - name: Enable forwarding now only when needed
+      ansible.builtin.command: sysctl -p /etc/sysctl.d/99-video2-network.conf
+      when: video2_forwarding.stdout | trim != '1'
+      changed_when: true

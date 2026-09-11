@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+modprobe vxlan
+# The script is idempotent and is called by a persistent systemd unit after
+# network-online.target. VXLAN supplies only the private lab L2 segment; it does
+# not make the VIP reachable from a laptop or from the Internet.
+if ! ip link show vxlan100 >/dev/null 2>&1; then
+  ip link add vxlan100 type vxlan id 100 \
+    local {{ private_ip }} dstport 4789 nolearning
+fi
+ip address replace {{ ha_overlay_ip }}/{{ ha_vip_prefix }} dev vxlan100
+ip link set vxlan100 up
+
+{% for peer in groups['load_balancers'] if peer != inventory_hostname %}
+bridge fdb replace 00:00:00:00:00:00 dev vxlan100 \
+  dst {{ hostvars[peer].private_ip }} self
+{% endfor %}

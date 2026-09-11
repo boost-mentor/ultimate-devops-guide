@@ -26,3 +26,23 @@ Thumbs.db
 .vscode/
 *.swp
 *.log
+
+# ── Блок 2: Terraform / Ansible / Kubespray ──
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+# личные значения: коммитим только *.example
+*.tfvars
+!*.tfvars.example
+# сгенерированные inventory с реальными адресами
+01_ЧАСТЬ_1_КЛАСТЕР/07_1.5_kubespray_full/inventory/video2/inventory.ini
+01_ЧАСТЬ_1_КЛАСТЕР/07_1.5_kubespray_full/inventory/video2/group_vars/all/all.yml
+01_ЧАСТЬ_1_КЛАСТЕР/*/kubespray/
+*.retry
+# публичные примеры и учебные значения — коммитим
+!.env.example
+!00_DEVOPS_MAY_CRY_APP/.env.example
+!01_ЧАСТЬ_1_КЛАСТЕР/01_1.1_hello_terraform/env/demo.tfvars
+!01_ЧАСТЬ_1_КЛАСТЕР/05_1.4_managed_cluster/terraform/vars.auto.tfvars

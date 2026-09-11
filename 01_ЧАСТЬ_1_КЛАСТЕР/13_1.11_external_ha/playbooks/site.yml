@@ -1,0 +1,116 @@
+---
+# This is the single canonical deployment playbook for the external HA lab.
+- name: Read private interfaces on all five VM
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks: []
+
+- name: Create the persistent private L2 between load balancers
+  hosts: load_balancers
+  become: true
+  gather_facts: false
+  roles:
+    - role: vxlan_l2
+
+- name: Configure HAProxy one load balancer at a time
+  hosts: load_balancers
+  become: true
+  gather_facts: false
+  serial: 1
+  roles:
+    - role: haproxy
+
+- name: Configure keepalived one load balancer at a time
+  hosts: load_balancers
+  become: true
+  gather_facts: false
+  serial: 1
+  roles:
+    - role: keepalived
+
+- name: Prove services, VIP visibility and HTTP from both load balancers
+  hosts: load_balancers
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Prove both daemons are active
+      ansible.builtin.command: "systemctl is-active {{ item }}"
+      changed_when: false
+      loop: [haproxy, keepalived, video2-vxlan.service]
+
+    - name: Read addresses on the intended VRRP interface
+      ansible.builtin.command: ip -4 -o address show dev vxlan100
+      register: vxlan_addresses
+      changed_when: false
+
+    - name: Record whether this host owns the VIP
+      ansible.builtin.set_fact:
+        owns_video2_vip: "{{ (ha_vip ~ '/' ~ ha_vip_prefix) in vxlan_addresses.stdout }}"
+
+    - name: Prove application readiness through the VIP
+      ansible.builtin.uri:
+        url: "http://{{ ha_vip }}:{{ ha_frontend_port }}/readyz"
+        status_code: 200
+        timeout: 5
+      register: vip_http
+      retries: 15
+      delay: 2
+      until: vip_http.status == 200
+
+    - name: Prove the local HAProxy statistics endpoint
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8404/stats
+        status_code: 200
+        timeout: 3
+
+- name: Assert that exactly one load balancer owns the VIP
+  hosts: load_balancers[0]
+  become: false
+  gather_facts: false
+  tasks:
+    - name: Compare the two ownership facts
+      ansible.builtin.assert:
+        that:
+          - hostvars[groups['load_balancers'][0]].owns_video2_vip != hostvars[groups['load_balancers'][1]].owns_video2_vip
+        fail_msg: "Expected exactly one VIP owner on vxlan100"
+        success_msg: "Exactly one load balancer owns the internal VIP"
+
+    - name: Record the current VIP owner for delegated statistics proof
+      ansible.builtin.set_fact:
+        active_load_balancer: >-
+          {{ groups['load_balancers'][0]
+             if hostvars[groups['load_balancers'][0]].owns_video2_vip
+             else groups['load_balancers'][1] }}
+
+    - name: Open twelve new connections through the VIP
+      # Each uri iteration creates a new TCP connection. HAProxy can therefore
+      # distribute them across NodePort backends with round-robin.
+      ansible.builtin.uri:
+        url: "http://{{ ha_vip }}:{{ ha_frontend_port }}/quote"
+        status_code: 200
+        timeout: 5
+      loop: "{{ range(0, 12) | list }}"
+      loop_control:
+        label: "request-{{ item }}"
+
+    - name: Read HAProxy CSV statistics from the current VIP owner
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8404/stats;csv
+        status_code: 200
+        timeout: 3
+        return_content: true
+      delegate_to: "{{ active_load_balancer }}"
+      register: round_robin_stats
+
+    - name: Prove every healthy NodePort backend received a connection
+      # In HAProxy CSV, stot is the sixth field after the server name. Requiring
+      # a positive counter for every node proves distribution at the LB layer;
+      # a changing Pod name alone would not, because kube-proxy may forward it.
+      ansible.builtin.assert:
+        that:
+          - >-
+            round_robin_stats.content is
+            regex('(?m)^kubernetes_nodeports,' ~ item ~ ',(?:[^,]*,){5}[1-9][0-9]*,')
+        fail_msg: "No HAProxy session counter for backend {{ item }}"
+      loop: "{{ groups['kubernetes_nodes'] }}"

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: calico-a
+  namespace: network-proof
+  labels:
+    app: calico-proof
+spec:
+  # Первый Pod закрепляем на node2 только для наблюдаемого сетевого опыта.
+  # В обычном приложении конкретную ноду так не фиксируют без причины.
+  nodeSelector:
+    kubernetes.io/hostname: node2
+  containers:
+    - name: toolbox
+      image: busybox:1.37.0
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+  restartPolicy: Never

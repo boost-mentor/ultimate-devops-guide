@@ -1,0 +1,15 @@
+---
+kube_version: 1.35.4
+kube_network_plugin: calico
+container_manager: containerd
+kube_proxy_mode: iptables
+kube_proxy_strict_arp: false
+kube_service_addresses: 10.233.0.0/18
+kube_pods_subnet: 10.233.64.0/18
+kube_network_node_prefix: 24
+cluster_name: cluster.local
+dns_mode: coredns
+enable_nodelocaldns: true
+kubeconfig_localhost: true
+kubeconfig_localhost_ansible_host: true
+kubectl_localhost: false

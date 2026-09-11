@@ -1,0 +1,50 @@
+---
+- name: Install keepalived and the HTTP probe client
+  ansible.builtin.apt:
+    name: [keepalived, curl]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install the HAProxy data-plane health check
+  # A green process alone is weak evidence. The script asks HAProxy for the
+  # application's /readyz path, so 503/no backend also removes this LB from VRRP.
+  ansible.builtin.copy:
+    dest: /usr/local/sbin/check-video2-haproxy
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      systemctl is-active --quiet haproxy
+      curl --fail --silent --show-error --max-time 2 \
+        http://127.0.0.1:{{ ha_frontend_port }}/readyz >/dev/null
+
+- name: Render, validate and atomically install the keepalived configuration
+  ansible.builtin.template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+    validate: "/usr/sbin/keepalived -t -f %s"
+  notify: Reload keepalived
+
+- name: Enable and start keepalived
+  ansible.builtin.systemd:
+    name: keepalived
+    state: started
+    enabled: true
+
+- name: Reload the validated configuration before proof
+  ansible.builtin.meta: flush_handlers
+
+- name: Re-read the installed keepalived configuration
+  ansible.builtin.command: /usr/sbin/keepalived -t -f /etc/keepalived/keepalived.conf
+  changed_when: false
+
+- name: Prove the tracked HTTP path locally
+  ansible.builtin.command: /usr/local/sbin/check-video2-haproxy
+  changed_when: false

@@ -1,0 +1,5 @@
+---
+# Общие значения для всех групп этого inventory.
+office_path: /tmp/devops-may-cry
+dispatcher_name: "дежурный общей смены"
+gear: "Фонарь из group_vars/all"

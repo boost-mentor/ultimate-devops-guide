@@ -1,0 +1,34 @@
+---
+- name: Read active swap devices
+  ansible.builtin.command: swapon --noheadings --show
+  register: active_swap
+  changed_when: false
+
+- name: Check operating system, Python and swap
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.system == "Linux"
+      - ansible_facts.distribution in ["Ubuntu", "Debian"]
+      - ansible_facts.python.version.major | int >= 3
+      - active_swap.stdout | trim == ""
+
+- name: Read loaded kernel modules
+  ansible.builtin.command: lsmod
+  register: loaded_modules
+  changed_when: false
+
+- name: Require container networking modules
+  ansible.builtin.assert:
+    that:
+      - loaded_modules.stdout is regex('(?m)^overlay\\s')
+      - loaded_modules.stdout is regex('(?m)^br_netfilter\\s')
+
+- name: Read IPv4 forwarding
+  ansible.builtin.command: sysctl -n net.ipv4.ip_forward
+  register: ip_forward
+  changed_when: false
+
+- name: Require IPv4 forwarding
+  ansible.builtin.assert:
+    that:
+      - ip_forward.stdout | trim == "1"

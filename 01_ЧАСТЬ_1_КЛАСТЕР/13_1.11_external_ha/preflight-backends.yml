@@ -1,0 +1,16 @@
+---
+- name: VIDEO2 · собрать приватные адреса без изменения VM
+  hosts: all
+  gather_facts: true
+  tasks: []
+
+- name: VIDEO2 · доказать NodePort с будущего внешнего LB
+  hosts: lb1
+  gather_facts: false
+  tasks:
+    - name: HTTP до каждого Kubernetes backend по private IP
+      ansible.builtin.uri:
+        url: "http://{{ hostvars[item].private_ip }}:{{ k8s_nodeport }}/readyz"
+        status_code: 200
+        timeout: 5
+      loop: "{{ groups['kubernetes_nodes'] }}"

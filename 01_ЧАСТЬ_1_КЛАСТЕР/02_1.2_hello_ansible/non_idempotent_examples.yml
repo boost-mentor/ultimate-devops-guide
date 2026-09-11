@@ -1,0 +1,110 @@
+---
+# Файл-справочник к теме «за счёт чего идемпотентность».
+# Он НЕ запускается в основном flow лабораторной и не подключён к site.yml
+# (см. README). Каждый блок — отдельная иллюстрация: как модуль узнаёт
+# желаемое состояние и где эта механика заканчивается.
+
+# --- Модуль сравнивает состояние: пакет ----------------------------------
+- name: Ensure nginx is installed
+  # apt сначала спрашивает у dpkg, установлен ли пакет в нужном состоянии.
+  # Установлен — task отчитывается ok и не трогает систему.
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+# --- Модуль сравнивает состояние: каталог --------------------------------
+- name: Ensure the dispatcher directory exists
+  # file проверяет существование, тип и права. Всё совпало — изменений нет.
+  ansible.builtin.file:
+    path: /etc/dispatcher
+    state: directory
+    mode: "0755"
+
+# --- service: started — требование, restarted — действие -----------------
+- name: Ensure the dispatcher service is running
+  # started — идемпотентное требование «сервис должен работать»:
+  # уже работающий сервис модуль не трогает.
+  ansible.builtin.service:
+    name: dispatcher
+    state: started
+
+- name: Restart the dispatcher service
+  # restarted — действие: перезапуск выполняется при КАЖДОМ прогоне.
+  # Такому шагу место в handler, а не в обычном списке tasks.
+  ansible.builtin.service:
+    name: dispatcher
+    state: restarted
+
+# --- Плохой пример: shell не знает желаемого состояния -------------------
+- name: BAD - append a line on every run
+  # Каждый прогон дописывает строку ещё раз — файл растёт бесконечно,
+  # а task всегда отчитывается changed: модулю не с чем сравнивать.
+  ansible.builtin.shell: echo 'debug=true' >> /etc/app.conf
+
+# --- Исправление 1: специализированный модуль ----------------------------
+- name: GOOD - ensure the required line exists
+  # Требует присутствия строки, но не удаляет все накопленные дубли.
+  # Здесь предполагается существующий файл; иначе нужен create: true.
+  ansible.builtin.lineinfile:
+    path: /etc/app.conf
+    line: "debug=true"
+
+# --- Исправление 2: creates для команды с артефактом ---------------------
+- name: GOOD - run the installer only once
+  # creates: если файл уже существует, команда пропускается целиком.
+  ansible.builtin.command: /opt/app/install.sh
+  args:
+    creates: /opt/app/.installed
+
+# --- Исправление 3: честный changed_when ---------------------------------
+- name: GOOD - report change only when it really happened
+  # changed_when уместен, только когда автор действительно может
+  # корректно определить изменение по выводу команды.
+  ansible.builtin.command: /opt/app/sync-config.sh
+  register: sync_result
+  changed_when: "'updated' in sync_result.stdout"
+
+# --- command vs shell vs raw: как выглядят рядом -------------------------
+- name: Run a binary directly (no shell) 
+  # command не запускает shell: pipes и redirects не интерпретируются.
+  # В современных версиях expand_argument_vars отдельно подставляет $VAR.
+  # Запуск из playbook — как обычная task; ad-hoc: ansible all -m command -a 'uptime'
+  ansible.builtin.command: uptime
+
+- name: Run a line through /bin/sh
+  # shell прогоняет строку через оболочку: pipes и redirects доступны —
+  # вместе со всеми сюрпризами экранирования.
+  ansible.builtin.shell: ss -tlnp | grep 8080
+
+- name: Run over SSH without Python
+  # raw шлёт строку по SSH мимо Python-модулей. Один из типовых кейсов —
+  # bootstrap: поставить Python туда, где его ещё нет.
+  ansible.builtin.raw: apt-get install -y python3
+
+# --- Handler: пять правок за прогон -> ОДИН перезапуск -------------------
+# Каждая task при changed кладёт уведомление в очередь. В конце play Ansible
+# выполняет каждый уникальный handler ОДИН раз — очередь дедуплицируется.
+# Пять изменённых конфигов ниже дают один restart, а не пять.
+- name: Render main config
+  ansible.builtin.template: {src: app.conf.j2, dest: /etc/app/app.conf}
+  notify: Restart app
+
+- name: Render logging config
+  ansible.builtin.template: {src: logging.conf.j2, dest: /etc/app/logging.conf}
+  notify: Restart app
+
+- name: Render limits config
+  ansible.builtin.template: {src: limits.conf.j2, dest: /etc/app/limits.conf}
+  notify: Restart app
+
+- name: Render auth config
+  ansible.builtin.template: {src: auth.conf.j2, dest: /etc/app/auth.conf}
+  notify: Restart app
+
+- name: Render routes config
+  ansible.builtin.template: {src: routes.conf.j2, dest: /etc/app/routes.conf}
+  notify: Restart app
+
+# handlers:
+#   - name: Restart app
+#     ansible.builtin.service: {name: app, state: restarted}

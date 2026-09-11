@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-may-cry
+  namespace: traffic-lab
+  labels:
+    app: devops-may-cry
+    app.kubernetes.io/name: devops-may-cry
+spec:
+  type: ClusterIP
+  selector:
+    app: devops-may-cry
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

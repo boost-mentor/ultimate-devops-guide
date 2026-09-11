@@ -1,0 +1,7 @@
+---
+ansible_user: ubuntu
+ansible_python_interpreter: /usr/bin/python3
+ha_vip: 10.77.0.10
+ha_vip_prefix: 24
+ha_frontend_port: 8080
+k8s_nodeport: 30080

@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: video2-l2
+  namespace: metallb-system
+spec:
+  # Speaker объявляет адреса именно из video2-pool в локальной сети.
+  # В этой лабораторной используем L2/ARP; BGP оставлен отдельной справкой.
+  ipAddressPools:
+    - video2-pool

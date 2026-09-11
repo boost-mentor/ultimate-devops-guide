@@ -1,0 +1,4 @@
+---
+ha_vip: 10.77.0.10
+ha_vip_prefix: 24
+ha_frontend_port: 8080

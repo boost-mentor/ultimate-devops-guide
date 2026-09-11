@@ -1,0 +1,4 @@
+.env
+bin/
+coverage.out
+k8s/overlays/recording/image.env

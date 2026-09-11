@@ -1,0 +1,39 @@
+---
+- name: Install HAProxy
+  ansible.builtin.apt:
+    name: haproxy
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Render, validate and atomically install the HAProxy configuration
+  # template renders to a temporary file, runs `haproxy -c` against that file,
+  # and replaces the live destination atomically only when validation succeeds.
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+    validate: "/usr/sbin/haproxy -c -f %s"
+  notify: Reload HAProxy
+
+- name: Enable and start HAProxy
+  ansible.builtin.systemd:
+    name: haproxy
+    state: started
+    enabled: true
+
+- name: Reload the validated configuration before proof
+  ansible.builtin.meta: flush_handlers
+
+- name: Re-read the installed HAProxy configuration
+  ansible.builtin.command: /usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg
+  changed_when: false
+
+- name: Prove the local statistics endpoint responds
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8404/stats
+    status_code: 200
+    timeout: 3

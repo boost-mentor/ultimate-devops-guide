@@ -1,0 +1,25 @@
+zone         = "ru-central1-a"
+cluster_name = "k8s-managed"
+
+# Учебный адресный план: отдельные непересекающиеся сети VM, Pod и Service.
+# Числа 20, 112 и 96 не предписаны Kubernetes; /24 и /16 задают размер пула.
+# VM: 10.20.0.0–10.20.0.255; отдельно от self-managed 10.10.0.0/24.
+vpc_cidr           = "10.20.0.0/24"
+cluster_ipv4_range = "10.112.0.0/16"   # Pod CIDR
+service_ipv4_range = "10.96.0.0/16"    # Service CIDR
+
+# Учебный baseline. Доступность версии в канале проверяем перед apply.
+k8s_version     = "1.34"
+release_channel = "STABLE"
+
+node_count = 2
+
+# false — фиксированное число нод; при true используются границы min/max ниже.
+enable_autoscaling       = false
+autoscaling_min_nodes    = 2
+autoscaling_max_nodes    = 5
+
+# 203.0.113.42 — документационный пример, не действующий адрес управления.
+# При заполнении заменить на определённый в сценарии внешний IPv4 выхода /32.
+allowed_nodeport_cidr = "203.0.113.42/32"
+allowed_api_cidr      = "203.0.113.42/32"

@@ -1,0 +1,9 @@
+---
+- name: Check Linux prerequisites before Kubespray
+  # Kubespray aggregates control-plane and worker hosts into this group.
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: node_preflight

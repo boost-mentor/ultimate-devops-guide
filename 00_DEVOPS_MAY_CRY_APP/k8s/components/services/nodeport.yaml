@@ -1,0 +1,21 @@
+# This manifest intentionally exposes the same DevOps May Cry application used
+# throughout parts 2-4. It does not smuggle a second nginx demo into the story.
+# Apply kubernetes/devops-may-cry/base first and wait for its rollout.
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-may-cry-ha-nodeport
+  namespace: traffic-lab
+  labels:
+    app.kubernetes.io/name: devops-may-cry
+    app.kubernetes.io/component: external-entry
+spec:
+  type: NodePort
+  externalTrafficPolicy: Cluster
+  selector:
+    app: devops-may-cry
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      nodePort: 30080

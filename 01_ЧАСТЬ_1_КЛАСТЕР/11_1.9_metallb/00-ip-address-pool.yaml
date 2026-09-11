@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: video2-pool
+  namespace: metallb-system
+spec:
+  # Это не случайные адреса. Диапазон заранее зарезервирован в подсети
+  # стенда и исключён из выдачи виртуальным машинам.
+  addresses:
+    - 10.10.0.240-10.10.0.250

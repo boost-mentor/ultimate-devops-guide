@@ -1,0 +1,11 @@
+# REFERENCE ONLY: do not apply without a real router and agreed ASN/address.
+# 192.0.2.0/24 is documentation space, not a reachable lab peer.
+apiVersion: metallb.io/v1beta2
+kind: BGPPeer
+metadata:
+  name: edge-router
+  namespace: metallb-system
+spec:
+  myASN: 64510
+  peerASN: 64500
+  peerAddress: 192.0.2.1

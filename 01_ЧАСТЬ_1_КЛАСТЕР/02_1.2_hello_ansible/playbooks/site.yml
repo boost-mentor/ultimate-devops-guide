@@ -1,0 +1,9 @@
+---
+- name: Configure the DEVOPS MAY CRY night office
+  # Play связывает группу из inventory и последовательность настроек.
+  hosts: night_office
+  gather_facts: false
+
+  roles:
+    # Role — переиспользуемый каталог tasks, templates, handlers и defaults.
+    - role: dispatcher

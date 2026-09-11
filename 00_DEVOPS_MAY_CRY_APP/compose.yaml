@@ -1,0 +1,68 @@
+name: devops-may-cry
+
+# Compose здесь нужен как локальная контрольная точка: тот же API сначала
+# проверяем без Kubernetes, а затем переносим в кластер без смены примера.
+services:
+  postgres:
+    image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    environment:
+      POSTGRES_DB: devopsmaycry
+      POSTGRES_USER: devopsmaycry
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devopsmaycry -d devopsmaycry"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    networks: [backend]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: devops-may-cry:2.0.0
+    environment:
+      PORT: "8080"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: devopsmaycry
+      DB_NAME: devopsmaycry
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      DB_SSLMODE: disable
+      # Explicitly enabled only in the isolated lab profile. The production
+      # default keeps the self-load endpoints unavailable.
+      LAB_ENDPOINTS_ENABLED: "true"
+    depends_on:
+      # API стартует только после готовности базы принимать соединения.
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      # Эту же разницу между «процесс жив» и «готов обслуживать запросы»
+      # позже перенесём в Kubernetes liveness/readiness probes.
+      test: ["CMD", "/devops-may-cry", "-healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    networks: [edge, backend]
+    restart: unless-stopped
+
+networks:
+  edge: {}
+  backend:
+    internal: true
+
+volumes:
+  postgres-data: {}

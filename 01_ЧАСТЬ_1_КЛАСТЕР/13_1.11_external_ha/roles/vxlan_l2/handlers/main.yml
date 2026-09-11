@@ -1,0 +1,6 @@
+---
+- name: Restart VIDEO2 VXLAN
+  ansible.builtin.systemd:
+    name: video2-vxlan.service
+    state: restarted
+    daemon_reload: true

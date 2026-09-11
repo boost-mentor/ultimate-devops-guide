@@ -1,0 +1,9 @@
+---
+# Добавить к inventory/video2/group_vars/k8s_cluster/addons.yml и повторно
+# запустить официальный cluster.yml. Версия образа берётся из pinned Kubespray
+# v2.31.0, а не из случайного `kubectl apply` по ветке main.
+metrics_server_enabled: true
+
+# В production не отключаем проверку kubelet TLS. Если metrics-server не может
+# проверить serving certificate, диагностируем SAN/CSR и исправляем сертификат.
+metrics_server_kubelet_insecure_tls: false

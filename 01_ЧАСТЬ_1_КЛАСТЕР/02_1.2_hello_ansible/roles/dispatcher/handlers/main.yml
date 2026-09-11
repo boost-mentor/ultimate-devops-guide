@@ -1,0 +1,6 @@
+---
+# В локальном примере нет daemon для перезапуска, поэтому handler сообщает об
+# изменении. В обычной service-role здесь находился бы проверяемый reload.
+- name: Report a configuration change
+  ansible.builtin.debug:
+    msg: "dispatcher.conf changed; a service role would restart its daemon here"

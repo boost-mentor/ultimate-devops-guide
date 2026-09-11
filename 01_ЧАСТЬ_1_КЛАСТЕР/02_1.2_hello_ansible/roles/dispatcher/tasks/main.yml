@@ -1,0 +1,33 @@
+---
+- name: Ensure the office directory exists
+  # Module file приводит каталог к описанному состоянию и ничего не меняет,
+  # если каталог уже существует с правильными правами.
+  ansible.builtin.file:
+    path: "{{ office_path }}"
+    state: directory
+    mode: "0755"
+  tags: [config]
+
+- name: Render the shift configuration
+  # Template подставляет переменные в текст. notify ставит handler в очередь
+  # только когда итоговый файл действительно изменился.
+  ansible.builtin.template:
+    src: dispatcher.conf.j2
+    dest: "{{ office_path }}/dispatcher.conf"
+    mode: "0644"
+  notify: Report a configuration change
+  tags: [config]
+
+- name: Read the rendered configuration
+  # Slurp читает удалённый файл через Ansible и возвращает base64-контент.
+  ansible.builtin.slurp:
+    src: "{{ office_path }}/dispatcher.conf"
+  register: rendered_shift
+  tags: [verify]
+
+- name: Show the effective configuration
+  # Debug нужен только для доказательства в лабораторной: показываем именно
+  # то значение, которое получилось после применения precedence переменных.
+  ansible.builtin.debug:
+    msg: "{{ rendered_shift.content | b64decode }}"
+  tags: [verify]

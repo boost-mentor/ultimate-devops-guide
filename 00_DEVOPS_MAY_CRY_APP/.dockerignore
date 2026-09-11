@@ -1,0 +1,8 @@
+.git
+.gitignore
+.env
+bin/
+coverage.out
+k8s/
+scripts/
+README.md

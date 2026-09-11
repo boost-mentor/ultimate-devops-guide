@@ -1,8 +1,24 @@
-# Kubernetes Блок 1 — лаборатория · BoostMentor
+# Kubernetes — лаборатория · BoostMentor
 
-Практика к гайду **«Kubernetes — рабочая тетрадь»**. Клонируешь репозиторий, поднимаешь приложение и кластер, трогаешь каждую тему руками: Docker, сети, RBAC, etcd, все сущности и `kubectl apply` по шагам.
+Практика к серии рабочих тетрадей **«Kubernetes с нуля, руками, до собеса»**. Клонируешь репозиторий, поднимаешь приложение и кластер, трогаешь каждую тему руками. Тетради (PDF) забираешь в Telegram-канале — ссылка внизу.
 
-Гайд (78 страниц, command-first) забираешь в Telegram-канале — ссылка внизу.
+| Блок | Папки | О чём |
+|---|---|---|
+| **Блок 1 · Kubernetes** | `app/`, `lab/` | Docker, сети, свой кластер через kubespray на 3 VM, все сущности, `kubectl apply` по шагам |
+| **Блок 2 · Production-кластер** | `00_DEVOPS_MAY_CRY_APP/`, `01_ЧАСТЬ_1_КЛАСТЕР/` | Terraform → Ansible → Kubespray: пять VM в облаке, свой кластер и managed рядом, одно приложение в оба |
+
+---
+
+## Блок 2 · Production-кластер — откуда берётся кластер
+
+- `00_DEVOPS_MAY_CRY_APP/` — сквозное приложение DEVOPS MAY CRY (Go + PostgreSQL): Compose для локального запуска, multi-stage Dockerfile, манифесты Kubernetes.
+- `01_ЧАСТЬ_1_КЛАСТЕР/` — тринадцать лабораторных по порядку видео: Hello Terraform → Hello Ansible → анатомия Kubespray → Terraform пяти VM → managed-кластер → preflight → Kubespray → проверка приложением → сравнение кластеров. Порядок, команды и что понадобится — в [`01_ЧАСТЬ_1_КЛАСТЕР/README.md`](01_ЧАСТЬ_1_КЛАСТЕР/README.md).
+
+Стенд платный (пять VM + managed-кластер в Yandex Cloud) — после практики `terraform destroy`. Личные значения (`*.tfvars`, `.env`, kubeconfig, сгенерированный `inventory.ini`) не коммитятся; в примерах документационные адреса `203.0.113.x`.
+
+---
+
+## Блок 1 · Kubernetes — лаборатория
 
 ## Что внутри
 
@@ -60,7 +76,7 @@ kubectl apply -f lab/01-pod/
 
 ## Гайд и продолжение
 
-- ✈ **Telegram — [t.me/booostmentor](https://t.me/booostmentor)** — полный гайд, разборы, следующие блоки серии
+- ✈ **Telegram — [t.me/booostmentor](https://t.me/booostmentor)** — рабочие тетради обоих блоков, разборы, следующие блоки серии
 - 🌐 **[boostmentor.ru](https://boostmentor.ru)** — менторство и обучение DevOps
 
 Автор — Виктор Шутов, DevOps-инженер и ментор.

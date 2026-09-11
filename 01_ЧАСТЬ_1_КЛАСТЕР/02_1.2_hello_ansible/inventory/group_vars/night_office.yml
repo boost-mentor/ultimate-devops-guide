@@ -1,0 +1,9 @@
+---
+# Значения только для группы night_office.
+dispatcher_name: "дежурный ночной смены"
+gear: "Рация из group_vars/night_office"
+
+call_prices:
+  dns-ghost: 3000
+  disk-full: 5000
+  memory-leak: 7000

@@ -1,0 +1,5 @@
+---
+# В v2.31.0 host — штатный запуск бинарника etcd через systemd.
+# Выбор упаковки независим от состава группы [etcd] в inventory.
+# all охватывает в том числе etcd-only hosts, если топология изменится.
+etcd_deployment_type: host

@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-may-cry
+  namespace: traffic-lab
+spec:
+  template:
+    spec:
+      containers:
+        - name: devops-may-cry
+          env:
+            - name: LAB_ENDPOINTS_ENABLED
+              value: "true"
