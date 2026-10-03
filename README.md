@@ -7,11 +7,25 @@
 Клонируешь, повторяешь за видео, ломаешь и чинишь. Ничего не «уже сделано за кадром».
 
 [![Видео](https://img.shields.io/badge/YouTube-гайды-FF0000?logo=youtube&logoColor=white)](https://youtube.com/@Viktor.Golang)
-[![Тетрадь](https://img.shields.io/badge/Рабочая_тетрадь-PDF-0c8aad)](https://boostmentor.ru/guides/workbook2-part1)
+[![Материалы](https://img.shields.io/badge/Рабочая_тетрадь-бот-0c8aad)](https://t.me/ViktorShutovMentorshipBot?start=workbook2)
 [![Telegram](https://img.shields.io/badge/Telegram-канал-229ED9?logo=telegram&logoColor=white)](https://t.me/booostmentor)
 [![Платформа](https://img.shields.io/badge/BoostMentor-обучение-5a49e6)](https://boostmentor.ru)
 
 </div>
+
+---
+
+## Исходники второго выпуска · VIDEO2B
+
+**Managed Kubernetes → подготовка Linux → Kubespray → приложение в двух кластерах.**
+
+- [Карта файлов и с чего продолжать](VIDEO2B.md).
+- [Отдельный релиз `video2b-v1.0`](https://github.com/boost-mentor/ultimate-devops-guide/releases/tag/video2b-v1.0) — скачать зафиксированные исходники выпуска.
+- [Предыдущий выпуск: Terraform, Ansible и пять VM](https://youtu.be/Lyc7Ng66GO0).
+
+Обе части используют один репозиторий и один стенд. В релиз входит полный снимок
+репозитория, включая подготовку из первой части; папки второго выпуска перечислены
+в его карте. Названия каталогов сохранены, чтобы совпадать с видео.
 
 ---
 
@@ -20,7 +34,7 @@
 | Блок | Папки | О чём | Видео |
 |---|---|---|---|
 | **1 · Kubernetes** | [`app/`](app) · [`lab/`](lab) | Docker, сети, кластер через Kubespray на 3 VM, все сущности, `kubectl apply` по шагам | [гайд 5 ч](https://youtu.be/6mhlHDJOQAw) |
-| **2 · Production-кластер** | [`00_DEVOPS_MAY_CRY_APP/`](00_DEVOPS_MAY_CRY_APP) · [`01_ЧАСТЬ_1_КЛАСТЕР/`](01_ЧАСТЬ_1_КЛАСТЕР) | Terraform → Ansible → Kubespray: пять VM в облаке, свой кластер и managed рядом, одно приложение в оба | часть 1 вышла |
+| **2 · Production-кластер** | [`00_DEVOPS_MAY_CRY_APP/`](00_DEVOPS_MAY_CRY_APP) · [`01_ЧАСТЬ_1_КЛАСТЕР/`](01_ЧАСТЬ_1_КЛАСТЕР) | Terraform → Ansible → Kubespray: пять VM в облаке, свой кластер и managed рядом, одно приложение в оба | [часть 1](https://youtu.be/Lyc7Ng66GO0) · [материалы части 2](VIDEO2B.md) |
 
 К каждому блоку есть рабочая тетрадь: команды с ожидаемым выводом, разбор ошибок и вопросы с собеседований. Забирается по ссылке в описании видео.
 
@@ -48,7 +62,11 @@
 
 Порядок прохождения, команды и что понадобится — в [`01_ЧАСТЬ_1_КЛАСТЕР/README.md`](01_ЧАСТЬ_1_КЛАСТЕР/README.md).
 
-> **Стенд платный.** Пять VM в Yandex Cloud стоят около 30 ₽ в час. Новым пользователям дают стартовый грант, его хватает примерно на 135 часов. Прошёл раздел — `terraform destroy`, и счёт останавливается.
+> **Стенд платный.** Пять VM и managed-кластер расходуют бюджет независимо от того,
+> выполняешь ли ты команды. Стоимость проверь для своих размеров ресурсов и текущего
+> тарифа облака. Сохраняй стенд между связанными разделами. Удаляй его после всей
+> нужной практики, проверяя план удаления; отдельно проверь оставшиеся диски,
+> адреса и другие платные ресурсы в облаке.
 
 ---
 
@@ -89,11 +107,10 @@ docker compose exec netshoot bash                      # getent hosts postgres, 
 
 **Своя инфраструктура (блок 2):**
 
-```bash
-export YC_TOKEN="$(yc iam create-token)"
-export YC_CLOUD_ID="$(yc config get cloud-id)"
-export YC_FOLDER_ID="$(yc config get folder-id)"
+Для продолжения после пяти VM открой [маршрут VIDEO2B](VIDEO2B.md).
+Если начинаешь с нуля, первая лабораторная работает локально и не требует токена облака:
 
+```bash
 cd 01_ЧАСТЬ_1_КЛАСТЕР/01_1.1_hello_terraform          # сначала без облака
 terraform init && terraform apply -var-file=env/demo.tfvars
 ```
@@ -106,7 +123,10 @@ Docker и `kubectl` для блока 1. Для блока 2 ещё Terraform, A
 
 `DB_PASSWORD: superpass`, `API_TOKEN: demo-token` и подобное это демо-значения. На них в гайде показываем, что `base64` в Secret это кодировка, а не шифрование. В проде так не носят: encryption-at-rest для etcd, RBAC на чтение секретов, Vault или External Secrets.
 
-Личные значения (`*.tfvars`, `.env`, kubeconfig, сгенерированный `inventory.ini`) в репозиторий не попадают, в примерах стоят документационные адреса `203.0.113.x`.
+Личные `.env`, `private.auto.tfvars`, рабочие `env/video.tfvars`, kubeconfig,
+state, планы и сгенерированные inventory не публикуем. Общие учебные
+`vars.auto.tfvars` и локальный `env/demo.tfvars` хранятся в Git намеренно.
+В адресных примерах используются документационные адреса `203.0.113.x`.
 
 ---
 
